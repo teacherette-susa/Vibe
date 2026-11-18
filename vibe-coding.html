@@ -1,0 +1,654 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Vibe Coding</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap">
+
+<style>
+/* Layout: dark single-theme, two-panel tab app */
+:root {
+  color-scheme: dark;
+  --bg:       #0d0f14;
+  --surface:  #181c28;
+  --surface2: #212638;
+  --border:   #313a55;
+  --text:     #edf0f7;
+  --muted:    #8c9ab8;
+  --subtle:   #b0bcda;
+  --c1: #6ee7a0;
+  --c2: #56c8f5;
+  --c3: #fbbf24;
+  --c4: #d8a4f0;
+  --c5: #fb923c;
+  --c6: #5eead4;
+  --danger: #f87171;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+  padding-block: 2rem 2rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ── HEADER ── */
+header { text-align: center; margin-bottom: 2.5rem; }
+.badge {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--c1);
+  border: 1px solid var(--c1);
+  padding: 0.2rem 0.75rem;
+  border-radius: 100px;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.9rem;
+}
+h1 { font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+h1 em { font-style: normal; color: var(--c1); }
+.subtitle { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--muted); margin-top: 0.6rem; }
+
+/* ── TAB BAR ── */
+.tabs { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.tab-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1.4rem;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); border-color: var(--text); }
+.tab-btn.active { background: var(--c1); border-color: var(--c1); color: #0a0d12; font-weight: 600; }
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── FRAMEWORK ── */
+.main { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+
+.progress-bar { height: 3px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--c1), var(--c2)); border-radius: 100px; transition: width 0.4s ease; width: 0%; }
+.progress-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); text-align: right; margin-top: 0.3rem; margin-bottom: 1.2rem; }
+
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.section-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none; transition: background 0.2s;
+}
+.section-header:hover { background: var(--surface2); }
+.section-number {
+  font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--c1);
+  background: rgba(110,231,160,0.12); border: 1px solid rgba(110,231,160,0.3);
+  width: 26px; height: 26px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.section-title { font-size: 0.95rem; font-weight: 700; flex: 1; color: var(--text); }
+.section-hint { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); display: none; }
+@media(min-width:500px){ .section-hint { display: block; } }
+.toggle-icon { font-size: 0.8rem; color: var(--muted); transition: transform 0.3s; }
+.section.open .toggle-icon { transform: rotate(180deg); }
+.section-body { display: none; padding: 1.25rem; flex-direction: column; gap: 1rem; }
+.section.open .section-body { display: flex; }
+
+.field label { display: block; font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--c2); letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+.field label .optional { color: var(--muted); margin-left: 0.5rem; font-size: 0.65rem; }
+
+textarea, input[type="text"] {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.82rem;
+  padding: 0.7rem 0.9rem; resize: vertical; transition: border-color 0.2s; outline: none; line-height: 1.5;
+}
+textarea:focus, input[type="text"]:focus { border-color: var(--c2); }
+textarea { min-height: 72px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip {
+  font-family: 'DM Mono', monospace; font-size: 0.73rem;
+  padding: 0.3rem 0.75rem; border-radius: 100px; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; transition: all 0.18s; user-select: none;
+}
+.chip:hover { border-color: var(--c1); color: var(--c1); }
+.chip.selected { background: rgba(110,231,160,0.14); border-color: var(--c1); color: var(--c1); }
+
+.output-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.output-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+.output-title { font-size: 0.95rem; font-weight: 700; color: var(--c3); }
+.btn-group { display: flex; gap: 0.5rem; }
+.btn {
+  font-family: 'DM Mono', monospace; font-size: 0.72rem; padding: 0.35rem 0.85rem;
+  border-radius: 7px; border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; transition: all 0.18s; letter-spacing: 0.05em;
+}
+.btn:hover { border-color: var(--text); color: var(--text); }
+.btn.primary { background: var(--c1); border-color: var(--c1); color: #0a0d12; font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+
+#output-box {
+  font-family: 'DM Mono', monospace; font-size: 0.82rem; line-height: 1.7;
+  color: var(--text); background: var(--bg); padding: 1.25rem;
+  white-space: pre-wrap; word-break: break-word; min-height: 180px;
+  border: none; outline: none; width: 100%; resize: vertical;
+}
+.copy-feedback { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--c1); padding: 0 1.25rem 0.75rem; display: none; }
+.tip {
+  background: rgba(86,200,245,0.07); border: 1px solid rgba(86,200,245,0.2);
+  border-radius: 8px; padding: 0.65rem 0.9rem;
+  font-family: 'DM Mono', monospace; font-size: 0.76rem; color: var(--c2); line-height: 1.6;
+}
+
+/* ── GLOSSAR ── */
+.glossar-wrap { max-width: 960px; margin: 0 auto; }
+
+.hero-term {
+  background: linear-gradient(135deg, rgba(110,231,160,0.08), rgba(86,200,245,0.08));
+  border: 1px solid rgba(110,231,160,0.28); border-radius: 16px;
+  padding: 2rem 2.25rem; margin-bottom: 2.5rem; position: relative; overflow: hidden;
+}
+.hero-term::before {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(110,231,160,0.1), transparent 70%);
+  pointer-events: none;
+}
+.hero-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; color: var(--c1); margin-bottom: 0.4rem; }
+.hero-term h2 { font-size: 2rem; font-weight: 800; color: var(--c1); margin-bottom: 0.7rem; }
+.hero-term p { font-size: 0.92rem; line-height: 1.75; color: var(--text); }
+.hero-term p strong { color: var(--c1); }
+.hero-term .analogy {
+  margin-top: 1rem; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--c3);
+  background: rgba(251,191,36,0.09); border-left: 3px solid var(--c3);
+  padding: 0.5rem 0.8rem; border-radius: 0 7px 7px 0;
+}
+
+.divider { display: flex; align-items: center; gap: 1rem; margin: 2rem 0 1.25rem; }
+.divider-line { flex: 1; height: 1px; background: var(--border); }
+.divider-label { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em; color: var(--muted); white-space: nowrap; }
+
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(275px, 1fr)); gap: 1.1rem; }
+
+.gcard {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 13px;
+  padding: 1.4rem 1.4rem 1.3rem; position: relative; overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+  animation: rise 0.45s ease both;
+}
+.gcard:hover { transform: translateY(-3px); border-color: var(--gc, var(--border)); }
+.gcard::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 3px; background: var(--gc, transparent); opacity: 0.75;
+}
+.gcard-icon  { font-size: 1.5rem; margin-bottom: 0.65rem; display: block; }
+.gcard-term  { font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; color: var(--gc, var(--muted)); text-transform: uppercase; margin-bottom: 0.25rem; }
+.gcard h3    { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.55rem; color: var(--text); line-height: 1.2; }
+.gcard p     { font-size: 0.85rem; line-height: 1.68; color: var(--subtle); }
+.gcard .ex   { margin-top: 0.85rem; font-family: 'DM Mono', monospace; font-size: 0.74rem; color: var(--gc, var(--muted)); background: var(--surface2); border-radius: 7px; padding: 0.5rem 0.7rem; line-height: 1.55; }
+.gcard .ex::before { content: '→ '; opacity: 0.55; }
+
+.gc1 { --gc: var(--c1); }
+.gc2 { --gc: var(--c2); }
+.gc3 { --gc: var(--c3); }
+.gc4 { --gc: var(--c4); }
+.gc5 { --gc: var(--c5); }
+.gc6 { --gc: var(--c6); }
+
+.flow-wrap { margin: 2.5rem 0 0; }
+.flow {
+  display: flex; align-items: stretch; overflow-x: auto; padding-bottom: 0.5rem;
+  border-radius: 12px; border: 1px solid var(--border); overflow: hidden;
+}
+.flow-step { flex: 1; min-width: 110px; background: var(--surface); padding: 1rem 0.7rem; text-align: center; border-right: 1px solid var(--border); }
+.flow-step:last-child { border-right: none; }
+.flow-num   { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-bottom: 0.35rem; }
+.flow-label { font-size: 0.78rem; font-weight: 700; line-height: 1.35; color: var(--text); }
+.flow-step:nth-child(1) .flow-label { color: var(--c1); }
+.flow-step:nth-child(2) .flow-label { color: var(--c2); }
+.flow-step:nth-child(3) .flow-label { color: var(--c3); }
+.flow-step:nth-child(4) .flow-label { color: var(--c4); }
+.flow-step:nth-child(5) .flow-label { color: var(--c5); }
+.flow-step:nth-child(6) .flow-label { color: var(--c6); }
+.flow-note { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 0.9rem; }
+.flow-note span { color: var(--c3); }
+
+/* ── COPYRIGHT FOOTER ── */
+.page-footer {
+  text-align: center;
+  margin-top: 4rem;
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.page-footer span { color: var(--c1); }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gcard:nth-child(1)  { animation-delay: 0.04s; }
+.gcard:nth-child(2)  { animation-delay: 0.08s; }
+.gcard:nth-child(3)  { animation-delay: 0.12s; }
+.gcard:nth-child(4)  { animation-delay: 0.16s; }
+.gcard:nth-child(5)  { animation-delay: 0.20s; }
+.gcard:nth-child(6)  { animation-delay: 0.24s; }
+.gcard:nth-child(7)  { animation-delay: 0.28s; }
+.gcard:nth-child(8)  { animation-delay: 0.32s; }
+.gcard:nth-child(9)  { animation-delay: 0.36s; }
+.gcard:nth-child(10) { animation-delay: 0.40s; }
+.gcard:nth-child(11) { animation-delay: 0.44s; }
+.gcard:nth-child(12) { animation-delay: 0.48s; }
+</style>
+
+<header>
+  <div class="badge">✦ VIBE CODING</div>
+  <h1>Prompt Framework &amp; <em>Glossar</em></h1>
+  <p class="subtitle">// Zwei Werkzeuge in einem — bauen und verstehen</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('framework', this)">⚡ Prompt Framework</button>
+  <button class="tab-btn" onclick="switchTab('glossar', this)">📖 Glossar</button>
+</div>
+
+<!-- PANEL 1: FRAMEWORK -->
+<div class="panel active" id="panel-framework">
+<div class="main">
+
+  <div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="progress-label" id="progress-label">0 / 5 ausgefüllt</div>
+  </div>
+
+  <!-- 01 -->
+  <div class="section open" id="s1">
+    <div class="section-header" onclick="toggleSection('s1')">
+      <div class="section-number">01</div>
+      <div class="section-title">Was soll gebaut werden?</div>
+      <span class="section-hint">Kernidee</span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Beschreib dein Projekt in 1–2 Sätzen</label>
+        <textarea id="f-was" placeholder="z.B. Eine einfache To-Do-App als Webseite, bei der man Aufgaben hinzufügen und abhaken kann." oninput="updateProgress()"></textarea>
+      </div>
+      <div class="tip">💡 Tipp: Denk an den Endnutzer — nicht an die Technik. Was soll die Person damit machen können?</div>
+    </div>
+  </div>
+
+  <!-- 02 -->
+  <div class="section" id="s2">
+    <div class="section-header" onclick="toggleSection('s2')">
+      <div class="section-number">02</div>
+      <div class="section-title">Technologie &amp; Umgebung</div>
+      <span class="section-hint">Stack</span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Welche Technologien sollen verwendet werden? <span class="optional">Wähle oder schreib eigene</span></label>
+        <div class="chips" id="chips-tech">
+          <span class="chip" onclick="toggleChip(this)">HTML/CSS/JS</span>
+          <span class="chip" onclick="toggleChip(this)">React</span>
+          <span class="chip" onclick="toggleChip(this)">Vue</span>
+          <span class="chip" onclick="toggleChip(this)">Python</span>
+          <span class="chip" onclick="toggleChip(this)">Node.js</span>
+          <span class="chip" onclick="toggleChip(this)">TypeScript</span>
+          <span class="chip" onclick="toggleChip(this)">Tailwind CSS</span>
+          <span class="chip" onclick="toggleChip(this)">SQLite</span>
+          <span class="chip" onclick="toggleChip(this)">egal / entscheide selbst</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Zusätzliche Angaben <span class="optional">optional</span></label>
+        <input type="text" id="f-tech-extra" placeholder="z.B. läuft im Browser, kein Backend nötig" oninput="updateProgress()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 -->
+  <div class="section" id="s3">
+    <div class="section-header" onclick="toggleSection('s3')">
+      <div class="section-number">03</div>
+      <div class="section-title">Look &amp; Feel</div>
+      <span class="section-hint">Vibe</span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Welchen Vibe soll das haben?</label>
+        <div class="chips" id="chips-vibe">
+          <span class="chip" onclick="toggleChip(this)">minimalistisch &amp; clean</span>
+          <span class="chip" onclick="toggleChip(this)">bunt &amp; verspielt</span>
+          <span class="chip" onclick="toggleChip(this)">dunkel &amp; modern</span>
+          <span class="chip" onclick="toggleChip(this)">professionell &amp; seriös</span>
+          <span class="chip" onclick="toggleChip(this)">retro / 8-bit</span>
+          <span class="chip" onclick="toggleChip(this)">freundlich &amp; rund</span>
+          <span class="chip" onclick="toggleChip(this)">egal / überrasch mich</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Farben / Referenzen <span class="optional">optional</span></label>
+        <input type="text" id="f-look" placeholder="z.B. Blau und Weiß, oder: so ähnlich wie Notion" oninput="updateProgress()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 -->
+  <div class="section" id="s4">
+    <div class="section-header" onclick="toggleSection('s4')">
+      <div class="section-number">04</div>
+      <div class="section-title">Was soll NICHT passieren?</div>
+      <span class="section-hint">Grenzen setzen</span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Häufige Einschränkungen</label>
+        <div class="chips" id="chips-limits">
+          <span class="chip" onclick="toggleChip(this)">kein Login / keine Authentifizierung</span>
+          <span class="chip" onclick="toggleChip(this)">kein externes Backend</span>
+          <span class="chip" onclick="toggleChip(this)">keine Datenbank</span>
+          <span class="chip" onclick="toggleChip(this)">kein npm / keine Dependencies</span>
+          <span class="chip" onclick="toggleChip(this)">kein komplexes State Management</span>
+          <span class="chip" onclick="toggleChip(this)">mobile-first</span>
+          <span class="chip" onclick="toggleChip(this)">barrierefrei (a11y)</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Eigene Grenzen <span class="optional">optional</span></label>
+        <input type="text" id="f-limits" placeholder="z.B. muss offline funktionieren, nur eine Datei" oninput="updateProgress()">
+      </div>
+    </div>
+  </div>
+
+  <!-- 05 -->
+  <div class="section" id="s5">
+    <div class="section-header" onclick="toggleSection('s5')">
+      <div class="section-number">05</div>
+      <div class="section-title">Umfang &amp; Ausgabestil</div>
+      <span class="section-hint">Fertigkeitslevel</span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="section-body">
+      <div class="field">
+        <label>Wie viel Code auf einmal?</label>
+        <div class="chips" id="chips-scope">
+          <span class="chip" onclick="toggleChipSingle('chips-scope',this)">MVP — nur das Nötigste</span>
+          <span class="chip" onclick="toggleChipSingle('chips-scope',this)">vollständige erste Version</span>
+          <span class="chip" onclick="toggleChipSingle('chips-scope',this)">Schritt für Schritt erklären</span>
+          <span class="chip" onclick="toggleChipSingle('chips-scope',this)">direkt kommentierter Code</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mein Erfahrungslevel</label>
+        <div class="chips" id="chips-level">
+          <span class="chip" onclick="toggleChipSingle('chips-level',this)">Anfänger — erkläre alles</span>
+          <span class="chip" onclick="toggleChipSingle('chips-level',this)">Mittel — kurze Kommentare reichen</span>
+          <span class="chip" onclick="toggleChipSingle('chips-level',this)">Fortgeschritten — nur Code</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-section">
+    <div class="output-header">
+      <div class="output-title">⚡ Generierter Prompt</div>
+      <div class="btn-group">
+        <button class="btn danger" onclick="clearAll()">Reset</button>
+        <button class="btn primary" onclick="generatePrompt()">Generieren ▶</button>
+      </div>
+    </div>
+    <textarea id="output-box" readonly placeholder="← Füll die Felder aus und klick Generieren"></textarea>
+    <div style="padding:0.75rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);flex-wrap:wrap;gap:0.5rem;">
+      <span style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);">Tipp: Prompt direkt in Claude, ChatGPT oder Cursor einfügen</span>
+      <button class="btn" onclick="copyPrompt()">📋 Kopieren</button>
+    </div>
+    <div class="copy-feedback" id="copy-feedback">✓ In Zwischenablage kopiert!</div>
+  </div>
+
+</div>
+</div>
+
+<!-- PANEL 2: GLOSSAR -->
+<div class="panel" id="panel-glossar">
+<div class="glossar-wrap">
+
+  <div class="hero-term">
+    <div class="hero-label">KERNBEGRIFF</div>
+    <h2>Vibe Coding</h2>
+    <p>
+      Vibe Coding bedeutet: Du beschreibst einer KI auf natürliche Sprache,
+      <strong>was</strong> du bauen willst — und sie schreibt den Code.
+      Du musst kein Profi sein. Du gibst den <strong>Vibe</strong> (Gefühl, Richtung, Idee) vor,
+      die KI übernimmt die technische Umsetzung.
+      Das Ziel ist nicht perfekter Code — sondern <strong>schnell etwas zum Laufen bringen</strong>.
+    </p>
+    <div class="analogy">🎬 Analogie: Du bist der Regisseur. Die KI ist dein Programmierer-Team.</div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">PROMPT-KONZEPTE</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="gcard gc1">
+      <span class="gcard-icon">💬</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Prompt</h3>
+      <p>Die Texteingabe, die du einer KI gibst. Je klarer und strukturierter der Prompt, desto besser das Ergebnis. Ein guter Prompt nennt: Was soll gemacht werden, wie soll es aussehen, was soll nicht passieren.</p>
+      <div class="ex">„Bau eine Webseite mit einem Zähler, der hochzählt, wenn ich klicke."</div>
+    </div>
+    <div class="gcard gc2">
+      <span class="gcard-icon">🧩</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Prompt Framework</h3>
+      <p>Eine wiederverwendbare Vorlage für Prompts. Statt jedes Mal neu zu überlegen, füllt man einfach die Bausteine aus — und bekommt einen fertigen, gut strukturierten Prompt. Genau das ist der linke Tab.</p>
+      <div class="ex">Felder ausfüllen → fertiger Prompt. Einmal lernen, immer nutzen.</div>
+    </div>
+    <div class="gcard gc3">
+      <span class="gcard-icon">🎨</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Vibe</h3>
+      <p>Der ästhetische und emotionale Charakter eines Projekts — nicht die Technik, sondern das Gefühl. Soll es clean und minimalistisch wirken? Dunkel und modern? Bunt und verspielt? Der Vibe steuert Design-Entscheidungen.</p>
+      <div class="ex">„Dunkel, modern, wie ein Hacker-Terminal."</div>
+    </div>
+    <div class="gcard gc4">
+      <span class="gcard-icon">⚙️</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Stack / Technologie</h3>
+      <p>Die Kombination aus Programmiersprachen und Tools für ein Projekt. Für Einsteiger reicht oft: HTML, CSS und JavaScript. Für größere Projekte kommen Frameworks wie React oder Backend-Sprachen wie Python dazu.</p>
+      <div class="ex">„HTML + CSS + JavaScript, läuft im Browser, kein Server nötig."</div>
+    </div>
+    <div class="gcard gc5">
+      <span class="gcard-icon">🏗️</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>MVP</h3>
+      <p><strong style="color:var(--c5)">Minimum Viable Product</strong> — die kleinstmögliche Version, die funktioniert. Kein Schnickschnack, keine Extras, nur das Wesentliche. Im Vibe Coding: erst den MVP bauen, dann schrittweise erweitern.</p>
+      <div class="ex">„Nur das Nötigste — ohne Login, ohne Datenbank."</div>
+    </div>
+    <div class="gcard gc6">
+      <span class="gcard-icon">🔒</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Einschränkungen</h3>
+      <p>Bedingungen, die der Code erfüllen muss — oder Dinge, die explizit vermieden werden sollen. KIs bauen sonst gerne komplexe Lösungen. Klare Grenzen halten das Ergebnis schlank und tatsächlich nutzbar.</p>
+      <div class="ex">„Kein Backend, keine npm-Pakete, nur eine einzige HTML-Datei."</div>
+    </div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">TECHNISCHE BEGRIFFE</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="card-grid">
+    <div class="gcard gc2">
+      <span class="gcard-icon">🌐</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>HTML / CSS / JS</h3>
+      <p><strong style="color:var(--c2)">HTML</strong> = Struktur (was ist auf der Seite). <strong style="color:var(--c2)">CSS</strong> = Aussehen (wie es aussieht). <strong style="color:var(--c2)">JavaScript (JS)</strong> = Verhalten (was bei Klick passiert). Diese drei bilden das Fundament jeder Webseite.</p>
+      <div class="ex">HTML: Knopf. CSS: Knopf ist blau. JS: Klick macht was.</div>
+    </div>
+    <div class="gcard gc4">
+      <span class="gcard-icon">⚛️</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Framework (React, Vue …)</h3>
+      <p>Ein vorgefertigtes Baukasten-System. React und Vue helfen dabei, komplexe, interaktive Webseiten mit wiederverwendbaren Komponenten zu bauen. Für einfache Einstiegsprojekte oft nicht nötig.</p>
+      <div class="ex">React: gut für Apps mit vielen interaktiven Teilen.</div>
+    </div>
+    <div class="gcard gc5">
+      <span class="gcard-icon">🖥️</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Backend vs. Frontend</h3>
+      <p><strong style="color:var(--c5)">Frontend</strong> = alles, was der Nutzer im Browser sieht. <strong style="color:var(--c5)">Backend</strong> = der Server im Hintergrund (Datenbank, Login-Logik). Viele Vibe-Coding-Projekte brauchen gar kein Backend.</p>
+      <div class="ex">Frontend: Webseite. Backend: Server, der Daten speichert.</div>
+    </div>
+    <div class="gcard gc1">
+      <span class="gcard-icon">📦</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Dependencies / npm</h3>
+      <p>Externe Code-Bibliotheken, die man einbindet. <strong style="color:var(--c1)">npm</strong> ist das Tool zum Installieren. Mehr Dependencies = mehr Komplexität. Für Einsteiger: lieber ohne starten, weniger kann mehr sein.</p>
+      <div class="ex">„Kein npm nötig — alles in einer HTML-Datei."</div>
+    </div>
+    <div class="gcard gc3">
+      <span class="gcard-icon">💾</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>Datenbank / SQLite</h3>
+      <p>Ein Ort, wo Daten dauerhaft gespeichert werden. <strong style="color:var(--c3)">SQLite</strong> ist eine leichtgewichtige Datenbank für lokale Tools. Viele einfache Projekte kommen ohne aus — Daten leben dann nur im Browser-Speicher.</p>
+      <div class="ex">Ohne Datenbank: Daten weg nach Seiten-Reload.</div>
+    </div>
+    <div class="gcard gc6">
+      <span class="gcard-icon">♿</span>
+      <div class="gcard-term">Begriff</div>
+      <h3>a11y / Barrierefreiheit</h3>
+      <p><strong style="color:var(--c6)">a11y</strong> steht für „Accessibility" (11 Buchstaben zwischen A und Y). Bedeutet: die App soll auch mit Screenreadern, per Tastatur und bei eingeschränktem Sehvermögen gut nutzbar sein.</p>
+      <div class="ex">KI nach „barrierefreiem Code" fragen — sie kennt die Standards.</div>
+    </div>
+  </div>
+
+  <div class="flow-wrap">
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-label">DER VIBE CODING PROZESS</div>
+      <div class="divider-line"></div>
+    </div>
+    <div class="flow">
+      <div class="flow-step"><div class="flow-num">01</div><div class="flow-label">Idee<br>beschreiben</div></div>
+      <div class="flow-step"><div class="flow-num">02</div><div class="flow-label">Prompt<br>aufbauen</div></div>
+      <div class="flow-step"><div class="flow-num">03</div><div class="flow-label">KI<br>generiert</div></div>
+      <div class="flow-step"><div class="flow-num">04</div><div class="flow-label">Ergebnis<br>testen</div></div>
+      <div class="flow-step"><div class="flow-num">05</div><div class="flow-label">Prompt<br>verfeinern</div></div>
+      <div class="flow-step"><div class="flow-num">06</div><div class="flow-label">Fertig /<br>Erweitern</div></div>
+    </div>
+    <p class="flow-note">Schritte 04 und 05 wiederholen sich — das nennt man <span>iteratives Prompting</span>.</p>
+  </div>
+
+</div>
+</div>
+
+<!-- COPYRIGHT FOOTER -->
+<footer class="page-footer">
+  © 2026 <span>Susanne Alles</span> – teacherette_total
+</footer>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function toggleChip(el) {
+  el.classList.toggle('selected');
+  updateProgress();
+}
+function toggleChipSingle(groupId, el) {
+  document.getElementById(groupId).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  updateProgress();
+}
+function getChips(groupId) {
+  return Array.from(document.querySelectorAll('#' + groupId + ' .chip.selected')).map(c => c.textContent.trim());
+}
+
+function updateProgress() {
+  let filled = 0;
+  if (document.getElementById('f-was').value.trim()) filled++;
+  if (getChips('chips-tech').length > 0 || document.getElementById('f-tech-extra').value.trim()) filled++;
+  if (getChips('chips-vibe').length > 0 || document.getElementById('f-look').value.trim()) filled++;
+  if (getChips('chips-limits').length > 0 || document.getElementById('f-limits').value.trim()) filled++;
+  if (getChips('chips-scope').length > 0 || getChips('chips-level').length > 0) filled++;
+  document.getElementById('progress').style.width = (filled / 5 * 100) + '%';
+  document.getElementById('progress-label').textContent = filled + ' / 5 ausgefüllt';
+}
+
+function generatePrompt() {
+  const was       = document.getElementById('f-was').value.trim();
+  const techChips = getChips('chips-tech');
+  const techExtra = document.getElementById('f-tech-extra').value.trim();
+  const vibeChips = getChips('chips-vibe');
+  const look      = document.getElementById('f-look').value.trim();
+  const limChips  = getChips('chips-limits');
+  const limExtra  = document.getElementById('f-limits').value.trim();
+  const scope     = getChips('chips-scope');
+  const level     = getChips('chips-level');
+
+  if (!was) {
+    document.getElementById('output-box').value = '⚠ Bitte füll mindestens Feld 01 aus.';
+    return;
+  }
+  const lines = [];
+  lines.push('# Aufgabe\n' + was);
+  const techParts = [...techChips, techExtra].filter(Boolean);
+  if (techParts.length) lines.push('\n# Technologie\n' + techParts.join(', '));
+  const vibeParts = [...vibeChips, look].filter(Boolean);
+  if (vibeParts.length) lines.push('\n# Look & Feel\n' + vibeParts.join(', '));
+  const limParts  = [...limChips, limExtra].filter(Boolean);
+  if (limParts.length)  lines.push('\n# Einschränkungen\n' + limParts.map(l => '- ' + l).join('\n'));
+  const styleParts = [...scope, ...level].filter(Boolean);
+  if (styleParts.length) lines.push('\n# Ausgabestil\n' + styleParts.join(' | '));
+  lines.push('\nBitte starte direkt mit dem Code. Keine langen Vorbemerkungen.');
+  document.getElementById('output-box').value = lines.join('\n');
+}
+
+function copyPrompt() {
+  const val = document.getElementById('output-box').value;
+  if (!val || val.startsWith('⚠') || val.startsWith('←')) return;
+  navigator.clipboard.writeText(val).then(() => {
+    const fb = document.getElementById('copy-feedback');
+    fb.style.display = 'block';
+    setTimeout(() => fb.style.display = 'none', 2000);
+  }).catch(() => {
+    const box = document.getElementById('output-box');
+    box.select();
+  });
+}
+
+function clearAll() {
+  document.querySelectorAll('textarea, input[type="text"]').forEach(el => el.value = '');
+  document.querySelectorAll('.chip.selected').forEach(el => el.classList.remove('selected'));
+  document.getElementById('output-box').value = '';
+  updateProgress();
+}
+</script>
